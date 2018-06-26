@@ -3,8 +3,12 @@ let results = null;
 
 const fromElemId = "fromCurrencyNameBtn";
 const defaultElemId = "defaultFromCurrencyName"
-// let defaultToCurrencyElem = document.getElementById("defaultToCurrencyName");
+const toElemId = "toCurrencyNameBtn";
+const defaultToElemId = "defaultToCurrencyName"
+let fromCurrencyId = null; // currency id of currency to be converted from
+let toCurrencyId = null; // currency id  of currency to be converted to
 
+// let defaultToCurrencyElem = document.getElementById("defaultToCurrencyName");
 
 let getCurrencyNamesTester = async () => {
 
@@ -24,16 +28,16 @@ let getCurrencyNamesTester = async () => {
 // ui should be updated with error msg if promise is rejected
 let getCurrencyNames = async () => {
 
-    const requestUrl = 'https://free.currencyconverterapi.com/api/v5/countries';
+    const requestUrl = 'https://free.currencyconverterapi.com/api/v5/currencies';
     let list = [];
 
     let namesResponse = await fetch(requestUrl);
     let names = await namesResponse.json();
 
     results = names.results;
-    for (countryKey in results) {
-        const countryObj = names.results[countryKey];
-        list.push(countryObj.currencyName);
+    for (currencyId in results) {
+        const currencyObj = names.results[currencyId];
+        list.push(currencyObj.currencyName);
     }
     list.sort();
     return list;
@@ -83,6 +87,40 @@ let removeDefaultCurrencyName = (defaultOptionId) => {
     defaultCurrencyElem.parentNode.removeChild(defaultCurrencyElem);
 }
 
+// it should get currency code given currency name
+let getCurrencyId = (userCurrencyName) => {
+    if (!results || !userCurrencyName) {
+        showErrMsg('currency Id cannot be found Reload')
+    }
+
+    for (currencyId in results) {
+        const currencyObj = results[currencyId];
+        if (currencyObj.currencyName == userCurrencyName) {
+            return currencyObj.id;
+        }
+    }
+
+    showErrMsg('currency Id cannot be found Reload');
+}
+
+// it should return currency id given currency name
+let getCurrencyIdTester1 = () => {
+    const currencyName = 'United States Dollar';
+    const currencyCode = getCurrencyId(currencyName);
+    if (currencyCode == 'USD') {
+        console.log('match found');
+    }
+}
+
+// it should show an error msg if currecyId cannot be found
+let getCurrencyIdTester2 = () => {
+    const currencyName = undefined;
+    const currencyCode = getCurrencyId(currencyName);
+    if (currencyCode == 'USD') {
+        console.log('match found');
+    }
+}
+
 let disableBtn = (selectElemId) => {
     let selectElem = document.getElementById(selectElemId);
     selectElem.disabled = true;
@@ -108,19 +146,45 @@ let getExchangeRate = (fromCurrencyCode = 'USD', toCurrencyCode = 'NGN') => {
 
 }
 
-disableBtn(fromElemId);
 
 
-/************** manual Tests  ************/
-// it should return an array of country names
+let showErrMsg = (msg) => {
+    console.log(msg);
+}
 
-// getCurrencyNamesTester();
+document.addEventListener('DOMContentLoaded', () => {
 
-// updateSeletBtnTester1();
+    let selectElem = null;
+    selectElem = document.getElementById(fromElemId);
+    selectElem.addEventListener('change', (event) => {
+        if (event.target.value) {
+            // get currency id of currency to convert from            
+            fromCurrencyId = getCurrencyId(event.target.value);
+        }
+    });
 
-// it should not activate btn if there r no currencyNames
-//updateSeletBtnTester2();
+    selectElem = document.getElementById(toElemId);
+    selectElem.addEventListener('change', (event) => {
+        if (event.target.value) {
+            // get currency id of currency to convert to
+            toCurrencyId = getCurrencyId(event.target.value);
 
-// getCurrencyNames().then(currencyNames => {
-//     updateSelectBtn(currencyNames, fromElemId, defaultElemId);
-// })
+
+        }
+    });
+
+
+})
+
+
+
+
+window.onload = () => {
+    disableBtn(fromElemId);
+    disableBtn(toElemId);
+
+    getCurrencyNames().then(currencyNames => {
+        updateSelectBtn(currencyNames, fromElemId, defaultElemId);
+        updateSelectBtn(currencyNames, toElemId, defaultToElemId);
+    });
+}
