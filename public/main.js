@@ -4,7 +4,8 @@ let results = null;
 const fromElemId = "fromCurrencyNameBtn";
 const defaultElemId = "defaultFromCurrencyName"
 const toElemId = "toCurrencyNameBtn";
-const defaultToElemId = "defaultToCurrencyName"
+const defaultToElemId = "defaultToCurrencyName";
+
 let fromCurrencyId = null; // currency id of currency to be converted from
 let toCurrencyId = null; // currency id  of currency to be converted to
 
