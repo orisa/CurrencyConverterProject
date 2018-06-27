@@ -4,11 +4,14 @@
    */
   let results = null;
 
+  /******************** ids of html elements *****************/
+
   const fromElemId = "fromCurrencyNameBtn";
   const defaultFromElemId = "defaultFromCurrencyName"
   const toElemId = "toCurrencyNameBtn";
   const defaultToElemId = "defaultToCurrencyName";
-  //   const convertBtnId = "convertBtn";
+  const amountElemId = 'amount';
+
   const fromCurrencyName = "British Pound";
   const toCurrencyName = "Nigerian Naira";
 
@@ -141,26 +144,42 @@
    * converts an amount from once currency to another
    * given  the amount, fromCurrencyId and toCurrencyId
    *
-   * @param {string} amount
-   * @param {string} fromCurrencyId
-   * @param {string} toCurrencyId
+   * @param {number} xchangeRate
    * @return {number} 
    */
   let convertAmt = (xchangeRate) => {
       // get user amount
       let amountElem = document.getElementById('amount');
-      return parseFloat(amountElem.value) * xchangeRate;
+      if (!amountElem.value) return;
+      return roundToTwoDecimalPlaces(parseFloat(amountElem.value) * xchangeRate);
   }
 
   let showErrMsg = (msg) => {
       console.log(msg);
   }
 
+  let roundToTwoDecimalPlaces = (value) => {
+      return Math.round(value * 100) / 100;
+  }
+
+  /**
+   * Updates the result input box with converted amount
+   * given  the new result
+   *
+   * @param {number} newResult
+   * 
+   */
+  let updateResult = (newResult) => {
+      if (!newResult) return;
+      document.getElementById('result').value = newResult.toString();
+  }
+
+
+
   let convertCurrencies = () => {
       getExchangeRate(convertUrl, fromCurrencyId, toCurrencyId).then((rate) => {
-          //updateXchangeRate(rate);
           const convertedAmt = convertAmt(rate);
-          // updatedResult(convertedAmt);
+          updateResult(convertedAmt);
           console.log(convertedAmt);
       })
   }
@@ -188,7 +207,7 @@
   document.addEventListener('DOMContentLoaded', () => {
 
       let selectElem = null;
-      let btnElem = null;
+      let amountElem = null;
 
       selectElem = document.getElementById(fromElemId);
       selectElem.addEventListener('change', (event) => {
@@ -208,8 +227,8 @@
           }
       });
 
-      //   btnElem = document.getElementById(convertBtnId);
-      //   btnElem.addEventListener('click', convertCurrencies)
+      amountElem = document.getElementById(amountElemId);
+      amountElem.addEventListener('input', convertCurrencies)
   })
 
   window.onload = () => {
