@@ -84,12 +84,12 @@ select {
     .card {
         margin-top: 32px;
     }
-    .card p {
+    /* .card p {
         font-size: 16px;
-    }
+    } */
     #appBox {
         width: 80%;
-        margin-top: 32px;
+        margin-top: 64px;
     }
     #appBox div {
         margin-bottom: 16px;
@@ -99,10 +99,13 @@ select {
 /******************** css for large screens e.g laptops *****************/
 
 @media(min-width: 1024px) {
+    #appHeader {
+        min-height: 72px;
+    }
     #appBox {
         flex-direction: row;
         width: 95%;
         justify-content: space-evenly;
-        margin-top: 64px;
+        margin-top: 72px;
     }
 }

@@ -155,7 +155,8 @@
   }
 
   let showErrMsg = (msg) => {
-      console.log(msg);
+      //   console.log(msg);
+      alert(msg);
   }
 
   let roundToTwoDecimalPlaces = (value) => {
