@@ -49,13 +49,32 @@ let getCurrencyIdTester2 = () => {
     }
 }
 
+// it should get exchange rate
+let getExChangeRateTester1 = () => {
+    const url = "https://free.currencyconverterapi.com/api/v5/convert";
+    const fromId = "GBP";
+    const toId = "NGN";
+
+    getExchangeRate(url, fromId, toId).then(rate => {
+        if (rate && rate > 0.0) {
+            console.log(rate)
+        } else {
+            console.log('error computing rate');
+        }
+    }).catch(err => {
+        console.log('error ocurred');
+    });
+}
+
 
 /************** manual Tests  ************/
 // it should return an array of country names
 
-getCurrencyNamesTester();
+//getCurrencyNamesTester();
 
 //updateSeletBtnTester1();
 
 // it should not activate btn if there r no currencyNames
 //updateSeletBtnTester2();
+
+getExChangeRateTester1();
