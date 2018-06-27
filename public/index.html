@@ -10,17 +10,42 @@
 </head>
 
 <body>
-    <select id="fromCurrencyNameBtn">
-        <option value="Britsh Pound" id="defaultFromCurrencyName">Britsh Pound</option>
-    </select>
-    <input type="text" name="useramount" id="amount">
-    <input type="text" name="result" id="result">
-    <select id="toCurrencyNameBtn">
-        <option value="Nigerian Naira" id="defaultToCurrencyName">Nigerian Naira</option>
-    </select>
-    <!-- <div>
-        <button id="convertBtn">convert</button>
-    </div> -->
+    <div id="appHeader">
+        <div class="title">Currency Converter</div>
+    </div>
+
+    <div class="card body1">
+        <p>Currency Converter is the number 1 tool for converting any amount of money from any currency to another.</br> Just
+            enterthe amount to be converted and instantly get the new amount in another currency.
+        </p>
+    </div>
+
+    <div id="appBox">
+        <div>
+            <label for="amount" class="body1">Amount</label>
+            <input type="number" name="useramount" id="amount" class="body2" required>
+        </div>
+
+        <div>
+            <label for="fromCurrencyNameBtn" class="body1">From</label>
+            <select id="fromCurrencyNameBtn">
+                <option value="Britsh Pound" id="defaultFromCurrencyName">Britsh Pound</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="toCurrencyNameBtn" class="body1">To</label>
+            <select id="toCurrencyNameBtn">
+                <option value="Nigerian Naira" id="defaultToCurrencyName">Nigerian Naira</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="result" class="body1">Result</label>
+            <input type="text" name="result" id="result" readonly>
+        </div>
+
+    </div>
 </body>
 <script src="js/main.js"></script>
 <!-- <script src="js/mainTest.js"></script> -->

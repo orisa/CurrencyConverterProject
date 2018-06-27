@@ -125,7 +125,7 @@
       const xchangeRateResponse = await fetch(requestUrl);
       const xchangeRateObj = await xchangeRateResponse.json();
       const rate = xchangeRateObj[query].val;
-      return Math.round(rate * 100) / 100;
+      return Math.round(rate * 10000) / 10000;
   }
 
   /**
@@ -159,7 +159,7 @@
   }
 
   let roundToTwoDecimalPlaces = (value) => {
-      return Math.round(value * 100) / 100;
+      return Math.round(value * 10000) / 10000;
   }
 
   /**
@@ -196,7 +196,7 @@
 
   let setDefaultAmount = (amount) => {
 
-      if (!amount || amount < 1.0) return;
+      if (!amount || amount > 1.0) return;
 
       let amountElem = document.getElementById('amount');
       amountElem.value = amount.toString();
