@@ -8,10 +8,13 @@
   const defaultFromElemId = "defaultFromCurrencyName"
   const toElemId = "toCurrencyNameBtn";
   const defaultToElemId = "defaultToCurrencyName";
-  const convertBtnId = "convertBtn";
+  //   const convertBtnId = "convertBtn";
+  const fromCurrencyName = "British Pound";
+  const toCurrencyName = "Nigerian Naira";
 
   let fromCurrencyId = null; // currency id of currency to converted from
   let toCurrencyId = null; // currency id  of currency to converted to
+  let amount = 1.0;
 
   const requestUrl = 'https://free.currencyconverterapi.com/api/v5/currencies';
   const convertUrl = "https://free.currencyconverterapi.com/api/v5/convert";
@@ -82,7 +85,7 @@
    */
   let getCurrencyId = (userCurrencyName) => {
       if (!results || !userCurrencyName) {
-          showErrMsg('currency Id cannot be found. Reload')
+          showErrMsg('an invalid currency name specified. Reload')
       }
 
       for (let currencyId in results) {
@@ -143,9 +146,10 @@
    * @param {string} toCurrencyId
    * @return {number} 
    */
-  let convertAmt = (amount, fromCurrencyId, toCurrencyId) => {
-
-
+  let convertAmt = (xchangeRate) => {
+      // get user amount
+      let amountElem = document.getElementById('amount');
+      return parseFloat(amountElem.value) * xchangeRate;
   }
 
   let showErrMsg = (msg) => {
@@ -154,10 +158,32 @@
 
   let convertCurrencies = () => {
       getExchangeRate(convertUrl, fromCurrencyId, toCurrencyId).then((rate) => {
-          updateXchangeRate(rate);
-          console.log(rate);
+          //updateXchangeRate(rate);
+          const convertedAmt = convertAmt(rate);
+          // updatedResult(convertedAmt);
+          console.log(convertedAmt);
       })
   }
+
+  let setDefaultCurrencyNames = (fromCurrencyName, toCurrencyName) => {
+      //set currency ids
+      fromCurrencyId = getCurrencyId(fromCurrencyName);
+      toCurrencyId = getCurrencyId(toCurrencyName);
+      // update select buttons
+      document.getElementById(fromElemId).value = fromCurrencyName;
+      document.getElementById(toElemId).value = toCurrencyName;
+
+  }
+
+  let setDefaultAmount = (amount) => {
+
+      if (!amount || amount < 1.0) return;
+
+      let amountElem = document.getElementById('amount');
+      amountElem.value = amount.toString();
+
+  }
+
 
   document.addEventListener('DOMContentLoaded', () => {
 
@@ -169,6 +195,7 @@
           if (event.target.value) {
               // get currency id of currency to convert from            
               fromCurrencyId = getCurrencyId(event.target.value);
+              convertCurrencies();
           }
       });
 
@@ -177,11 +204,12 @@
           if (event.target.value) {
               // get currency id of currency to convert to
               toCurrencyId = getCurrencyId(event.target.value);
+              convertCurrencies();
           }
       });
 
-      btnElem = document.getElementById(convertBtnId);
-      btnElem.addEventListener('click', convertCurrencies)
+      //   btnElem = document.getElementById(convertBtnId);
+      //   btnElem.addEventListener('click', convertCurrencies)
   })
 
   window.onload = () => {
@@ -189,8 +217,12 @@
       disableBtn(fromElemId);
       disableBtn(toElemId);
 
+
       getCurrencyNames(requestUrl).then(currencyNames => {
           populateSelectBtn(currencyNames, fromElemId, defaultFromElemId);
           populateSelectBtn(currencyNames, toElemId, defaultToElemId);
+          setDefaultCurrencyNames(fromCurrencyName, toCurrencyName);
+          setDefaultAmount(amount)
+          convertCurrencies();
       });
   }
