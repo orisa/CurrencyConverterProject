@@ -22,6 +22,18 @@
   const requestUrl = 'https://free.currencyconverterapi.com/api/v5/currencies';
   const convertUrl = "https://free.currencyconverterapi.com/api/v5/convert";
 
+
+  /********** indexeddb  ******************/
+  const rateStoreName = 'rates';
+
+  var dbPromise = idb.open('cc-db', 1, function (upgradeDb) {
+      switch (upgradeDb.oldVersion) {
+          case 0:
+              let rateStore = upgradeDb.createObjectStore(rateStoreName, {
+                  keyPath: 'currencyIdPair'
+              });
+      }
+  });
   /**
    * Returns a sorted list of currency names given url of api endpoint
    *
@@ -177,13 +189,24 @@
 
 
 
-  let convertCurrencies = () => {
-      getExchangeRate(convertUrl, fromCurrencyId, toCurrencyId).then((rate) => {
+  let convertCurrencies = async () => {
+      const rate = await getExchangeRate(convertUrl, fromCurrencyId, toCurrencyId);
+      if (rate) {
           const convertedAmt = convertAmt(rate);
           updateResult(convertedAmt);
-          console.log(convertedAmt);
-      })
+          //console.log(convertedAmt); 
+          return rate;
+      }
   }
+
+  //   let convertCurrencies = () => {
+  //       getExchangeRate(convertUrl, fromCurrencyId, toCurrencyId).then(rate => {
+  //           const convertedAmt = convertAmt(rate);
+  //           updateResult(convertedAmt);
+  //           //console.log(convertedAmt); 
+  //           return rate;
+  //       });
+  //   }
 
   let setDefaultCurrencyNames = (fromCurrencyName, toCurrencyName) => {
       //set currency ids
@@ -204,6 +227,37 @@
 
   }
 
+  let updateXchangeRateObj = (rate, fromCurrencyId, toCurrencyId) => {
+      const currencyIdPair = `${fromCurrencyId}_${toCurrencyId}`;
+
+      //   const rateObj = {
+      //       currencyIdPair: currencyIdPair,
+      //       rate: rate,
+      //       fromCurrencyName: fromCurrencyName,
+      //       toCurrencyName: toCurrencyName
+      //   };
+
+      // add people to "people"
+      dbPromise.then(function (db) {
+          let tx = db.transaction(rateStoreName, 'readwrite');
+          let rateStore = tx.objectStore(rateStoreName);
+
+          rateStore.put({
+              currencyIdPair: currencyIdPair,
+              xChangeRate: rate,
+              fromCurrencyId: fromCurrencyId,
+              toCurrencyId: toCurrencyId
+          });
+      });
+  }
+
+  let convertAmount = () => {
+      convertCurrencies().then(rate => {
+          console.log(rate);
+          updateXchangeRateObj(rate, fromCurrencyId, toCurrencyId);
+      });
+  }
+
 
   document.addEventListener('DOMContentLoaded', () => {
 
@@ -215,7 +269,8 @@
           if (event.target.value) {
               // get currency id of currency to convert from            
               fromCurrencyId = getCurrencyId(event.target.value);
-              convertCurrencies();
+              //convertCurrencies();
+              convertAmount();
           }
       });
 
@@ -224,12 +279,13 @@
           if (event.target.value) {
               // get currency id of currency to convert to
               toCurrencyId = getCurrencyId(event.target.value);
-              convertCurrencies();
+              convertAmount();
+              //   convertCurrencies();
           }
       });
 
       amountElem = document.getElementById(amountElemId);
-      amountElem.addEventListener('input', convertCurrencies)
+      amountElem.addEventListener('input', convertAmount)
   })
 
   window.onload = () => {
@@ -252,6 +308,8 @@
           populateSelectBtn(currencyNames, toElemId, defaultToElemId);
           setDefaultCurrencyNames(fromCurrencyName, toCurrencyName);
           setDefaultAmount(amount)
-          convertCurrencies();
+          //   convertCurrencies();
+          convertAmount();
+          //saveResultsOffline(results);          
       });
   }

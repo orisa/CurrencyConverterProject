@@ -66,6 +66,17 @@ let getExChangeRateTester1 = () => {
     });
 }
 
+// it should return rate of the currency pair in db
+
+let convertCurrenciesOfflineTester1 = () => {
+    const fromId = 'USD';
+    const toId = 'NGN';
+    const rate = convertCurrenciesOfflineTester(fromId, toId);
+    if (rate) {
+        console.log('rate is ' + rate);
+    }
+}
+
 
 /************** manual Tests  ************/
 // it should return an array of country names
