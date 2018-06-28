@@ -234,6 +234,15 @@
 
   window.onload = () => {
 
+      if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/serviceworker.js')
+              .then(registrationObj => {
+                  console.log('Service worker is registered with scope', registrationObj.scope);
+              }).catch(err => {
+                  console.log('Service worker is not registered', err);
+              });
+      }
+
       disableBtn(fromElemId);
       disableBtn(toElemId);
 
