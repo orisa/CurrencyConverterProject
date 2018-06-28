@@ -12,8 +12,8 @@
   const defaultToElemId = "defaultToCurrencyName";
   const amountElemId = 'amount';
 
-  const fromCurrencyName = "British Pound";
-  const toCurrencyName = "Nigerian Naira";
+  let fromCurrencyName = "British Pound";
+  let toCurrencyName = "Nigerian Naira";
 
   let fromCurrencyId = null; // currency id of currency to converted from
   let toCurrencyId = null; // currency id  of currency to converted to
@@ -25,13 +25,16 @@
 
   /********** indexeddb  ******************/
   const rateStoreName = 'rates';
+  const currenciesStoreName = 'currenciesNames';
 
-  var dbPromise = idb.open('cc-db', 1, function (upgradeDb) {
+  var dbPromise = idb.open('cc-db', 2, function (upgradeDb) {
       switch (upgradeDb.oldVersion) {
           case 0:
               let rateStore = upgradeDb.createObjectStore(rateStoreName, {
                   keyPath: 'currencyIdPair'
               });
+          case 1:
+              let namesStore = upgradeDb.createObjectStore(currenciesStoreName);
       }
   });
   /**
@@ -251,10 +254,39 @@
       });
   }
 
+  let updateCurrencyNamesStore = (fromCurrencyName, toCurrencyName) => {
+
+
+      dbPromise.then(function (db) {
+          let tx = db.transaction(currenciesStoreName, 'readwrite');
+          let currenciesNamesStore = tx.objectStore(currenciesStoreName);
+
+          currenciesNamesStore.get('results').then(results => {
+              console.dir(results);
+              if (!results) {
+                  currenciesNamesStore.put([fromCurrencyName, toCurrencyName].sort(), 'results');
+                  return;
+              }
+
+              if (!results.includes(fromCurrencyName)) {
+                  results.push(fromCurrencyName);
+              }
+
+              if (!results.includes(toCurrencyName)) {
+                  results.push(toCurrencyName);
+              }
+              currenciesNamesStore.put(results.sort(), 'results');
+
+          })
+
+      });
+  }
+
   let convertAmount = () => {
       convertCurrencies().then(rate => {
           console.log(rate);
           updateXchangeRateObj(rate, fromCurrencyId, toCurrencyId);
+          updateCurrencyNamesStore(fromCurrencyName, toCurrencyName);
       });
   }
 
@@ -267,6 +299,7 @@
       selectElem = document.getElementById(fromElemId);
       selectElem.addEventListener('change', (event) => {
           if (event.target.value) {
+              fromCurrencyName = event.target.value;
               // get currency id of currency to convert from            
               fromCurrencyId = getCurrencyId(event.target.value);
               //convertCurrencies();
@@ -277,6 +310,7 @@
       selectElem = document.getElementById(toElemId);
       selectElem.addEventListener('change', (event) => {
           if (event.target.value) {
+              toCurrencyName = event.target.value;
               // get currency id of currency to convert to
               toCurrencyId = getCurrencyId(event.target.value);
               convertAmount();
@@ -311,5 +345,7 @@
           //   convertCurrencies();
           convertAmount();
           //saveResultsOffline(results);          
+      }).catch(err => {
+          console.log('currency names not found')
       });
   }
