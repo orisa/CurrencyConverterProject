@@ -22,21 +22,45 @@
   const requestUrl = 'https://free.currencyconverterapi.com/api/v5/currencies';
   const convertUrl = "https://free.currencyconverterapi.com/api/v5/convert";
 
+  const cacheType = '.cacheType';
+  const networkType = '.networkType'
+  let isNetworkNamesHidden = false;
 
   /********** indexeddb  ******************/
   const rateStoreName = 'rates';
   const currenciesStoreName = 'currenciesNames';
 
-  var dbPromise = idb.open('cc-db', 2, function (upgradeDb) {
+  let dbPromise = idb.open('cc-db', 2, function (upgradeDb) {
       switch (upgradeDb.oldVersion) {
           case 0:
               let rateStore = upgradeDb.createObjectStore(rateStoreName, {
                   keyPath: 'currencyIdPair'
               });
           case 1:
-              let namesStore = upgradeDb.createObjectStore(currenciesStoreName);
+              let namesStore = upgradeDb.createObjectStore(currenciesStoreName, {
+                  keyPath: 'name'
+              });
       }
   });
+
+  let getCachedCurrencyNames = () => {
+
+      let list = [];
+      return dbPromise.then(db => {
+
+          let tx = db.transaction(currenciesStoreName);
+          let currenciesNamesStore = tx.objectStore(currenciesStoreName);
+
+          return currenciesNamesStore.getAll().then(currencies => {
+              if (currencies) {
+                  for (let currencyObj of currencies) {
+                      list.push(currencyObj.name)
+                  }
+              }
+              return list;
+          });
+      });
+  };
   /**
    * Returns a sorted list of currency names given url of api endpoint
    *
@@ -76,13 +100,22 @@
 
       let btnElem = document.getElementById(selectElemId);
       btnElem.disabled = false;
-      removeDefaultCurrencyName(optionElemId);
+      removeDefaultCurrencyName(selectElemId, optionElemId);
       currencyNames.forEach((currencyName) => {
           let optionElem = document.createElement('option');
+          if (navigator.onLine) {
+              //   optionElem.setAttribute('data-type', networkType)
+              optionElem.classList.add("networkType")
+          } else {
+              //optionElem.setAttribute('data-type', cacheType)
+              optionElem.classList.add("cacheType")
+
+          }
           optionElem.value = currencyName;
           optionElem.innerHTML = currencyName;
           btnElem.appendChild(optionElem);
       });
+
   }
 
   /**
@@ -91,9 +124,13 @@
    *
    * @param {string} optionElemId
    */
-  let removeDefaultCurrencyName = (optionElemId) => {
-      let defaultOptionElem = document.getElementById(optionElemId);
-      defaultOptionElem.parentNode.removeChild(defaultOptionElem);
+  let removeDefaultCurrencyName = (selectElemId, optionElemId) => {
+      //   let defaultOptionElem = document.getElementById(optionElemId);
+      //   defaultOptionElem.parentNode.removeChild(defaultOptionElem);
+      var parent = document.getElementById(selectElemId);
+      var child = document.getElementById(optionElemId);
+      //parent.removeChild(child)
+      child.setAttribute('hidden', 'true');
   }
 
   /**
@@ -116,9 +153,9 @@
       showErrMsg('currency Id cannot be found. Reload');
   }
 
-  let disableBtn = (selectElemId) => {
-      let selectElem = document.getElementById(selectElemId);
-      selectElem.disabled = true;
+  let disableSelectBtns = (newState) => {
+      document.getElementById(fromElemId).disabled = newState;
+      document.getElementById(toElemId).disabled = newState;
   }
 
   /**
@@ -221,6 +258,32 @@
 
   }
 
+  let setCachedDefaultCurrencyNames = (fromCurrencyName, toCurrencyName) => {
+      //set currency ids
+
+      dbPromise.then(function (db) {
+          let tx = db.transaction(currenciesStoreName, 'readwrite');
+          let currenciesNameStore = tx.objectStore(currenciesStoreName);
+
+          currenciesNameStore.get(fromCurrencyName).then(fromCurrencyObj => {
+              if (fromCurrencyObj) {
+                  fromCurrencyId = fromCurrencyObj.id;
+              }
+          })
+          currenciesNameStore.get(toCurrencyName).then(toCurrencyObj => {
+              if (toCurrencyObj) {
+                  toCurrencyId = toCurrencyObj.id;
+
+              }
+          });
+
+          // update select buttons
+          document.getElementById(fromElemId).value = fromCurrencyName;
+          document.getElementById(toElemId).value = toCurrencyName;
+      });
+
+  }
+
   let setDefaultAmount = (amount) => {
 
       if (!amount || amount > 1.0) return;
@@ -230,15 +293,9 @@
 
   }
 
-  let updateXchangeRateObj = (rate, fromCurrencyId, toCurrencyId) => {
+  let updateXchangeRateStore = (rate, fromCurrencyId, toCurrencyId) => {
       const currencyIdPair = `${fromCurrencyId}_${toCurrencyId}`;
 
-      //   const rateObj = {
-      //       currencyIdPair: currencyIdPair,
-      //       rate: rate,
-      //       fromCurrencyName: fromCurrencyName,
-      //       toCurrencyName: toCurrencyName
-      //   };
 
       // add people to "people"
       dbPromise.then(function (db) {
@@ -254,30 +311,16 @@
       });
   }
 
-  let updateCurrencyNamesStore = (fromCurrencyName, toCurrencyName) => {
+  let updateCurrencyNamesStore = (fromCurrencyObj, toCurrencyObj) => {
 
 
       dbPromise.then(function (db) {
           let tx = db.transaction(currenciesStoreName, 'readwrite');
           let currenciesNamesStore = tx.objectStore(currenciesStoreName);
 
-          currenciesNamesStore.get('results').then(results => {
-              console.dir(results);
-              if (!results) {
-                  currenciesNamesStore.put([fromCurrencyName, toCurrencyName].sort(), 'results');
-                  return;
-              }
+          currenciesNamesStore.put(fromCurrencyObj);
+          currenciesNamesStore.put(toCurrencyObj);
 
-              if (!results.includes(fromCurrencyName)) {
-                  results.push(fromCurrencyName);
-              }
-
-              if (!results.includes(toCurrencyName)) {
-                  results.push(toCurrencyName);
-              }
-              currenciesNamesStore.put(results.sort(), 'results');
-
-          })
 
       });
   }
@@ -285,10 +328,113 @@
   let convertAmount = () => {
       convertCurrencies().then(rate => {
           console.log(rate);
-          updateXchangeRateObj(rate, fromCurrencyId, toCurrencyId);
-          updateCurrencyNamesStore(fromCurrencyName, toCurrencyName);
+          updateXchangeRateStore(rate, fromCurrencyId, toCurrencyId);
+          updateCurrencyNamesStore({
+              name: fromCurrencyName,
+              id: fromCurrencyId
+          }, {
+              name: toCurrencyName,
+              id: toCurrencyId
+          });
       });
   }
+
+
+  /**
+   * Removes currency names from dom
+   * given  the select element id and the type of currency name to remove 
+   *
+   * @param {string} elemId
+   * @param {string} type
+   */
+  let removeCurrencyNames = (elemId, type) => {
+      let selectElem = document.getElementById(elemId);
+      let optionElems = selectElem.querySelectorAll(type);
+      for (let elem of optionElems) {
+          elem.remove();
+      }
+  }
+
+  /**
+   * Disables select elements for 1 sec so that its is compleltely populated with currency names 
+   * in order to allow user see all currency names. 
+   * given  the select element id and the type of currency name to remove 
+   *
+   */
+
+  toggleBtnState = () => {
+      document.getElementById(fromElemId).disabled = true;
+      document.getElementById(toElemId).disabled = true;
+
+      setTimeout(() => {
+          document.getElementById(fromElemId).disabled = false;
+          document.getElementById(toElemId).disabled = false;
+      }, 1000);
+
+  }
+
+
+  let showCachedCurrenciesNames = () => {
+
+      toggleBtnState();
+
+      getCachedCurrencyNames().then((currencyNames) => {
+          for (let elemId of [fromElemId, toElemId]) {
+              if (!isNetworkNamesHidden) {
+                  // hideNetworkCurrencyNames(fromElemId);
+                  hideNetworkCurrencyNames(elemId);
+              }
+
+              removeCurrencyNames(elemId, cacheType);
+
+          }
+          isNetworkNamesHidden = true;
+
+          populateSelectBtn(currencyNames, fromElemId, defaultFromElemId);
+          populateSelectBtn(currencyNames, toElemId, defaultToElemId);
+
+      })
+
+  }
+
+  let showNetworkCurrenciesNames = (elemId) => {
+      toggleBtnState()
+      getCurrencyNames(requestUrl).then((currencyNames) => {
+          for (let elemId of [fromElemId, toElemId]) {
+              if (isNetworkNamesHidden) {
+                  // hideNetworkCurrencyNames(fromElemId);
+                  showNetworkCurrencyNames(elemId);
+              }
+              removeCurrencyNames(elemId, cacheType);
+
+          }
+          isNetworkNamesHidden = false;
+          populateSelectBtn(currencyNames, fromElemId, defaultFromElemId);
+          populateSelectBtn(currencyNames, toElemId, defaultToElemId);
+
+      })
+  }
+
+
+  let hideNetworkCurrencyNames = (id) => {
+      let selectElem = document.getElementById(id);
+      let optionElems = selectElem.querySelectorAll(networkType);
+      for (let elem of optionElems) {
+          elem.setAttribute('hidden', 'true');
+      }
+
+  }
+
+  let showNetworkCurrencyNames = (id) => {
+      let selectElem = document.getElementById(id);
+      let optionElems = selectElem.querySelectorAll(networkType);
+      for (let elem of optionElems) {
+          elem.setAttribute('hidden', 'false');
+      }
+
+  }
+
+
 
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -297,6 +443,9 @@
       let amountElem = null;
 
       selectElem = document.getElementById(fromElemId);
+      window.addEventListener('offline', showCachedCurrenciesNames);
+      window.addEventListener('online', showNetworkCurrenciesNames);
+
       selectElem.addEventListener('change', (event) => {
           if (event.target.value) {
               fromCurrencyName = event.target.value;
@@ -333,18 +482,23 @@
               });
       }
 
-      disableBtn(fromElemId);
-      disableBtn(toElemId);
+      disableSelectBtns(true);
 
+      getCachedCurrencyNames().then((currencyNames) => {
+          populateSelectBtn(currencyNames, fromElemId, defaultFromElemId);
+          populateSelectBtn(currencyNames, toElemId, defaultToElemId);
+          setCachedDefaultCurrencyNames(fromCurrencyName, toCurrencyName);
+          setDefaultAmount(amount);
+          //convertAmount();
+
+      })
 
       getCurrencyNames(requestUrl).then(currencyNames => {
           populateSelectBtn(currencyNames, fromElemId, defaultFromElemId);
           populateSelectBtn(currencyNames, toElemId, defaultToElemId);
           setDefaultCurrencyNames(fromCurrencyName, toCurrencyName);
           setDefaultAmount(amount)
-          //   convertCurrencies();
           convertAmount();
-          //saveResultsOffline(results);          
       }).catch(err => {
           console.log('currency names not found')
       });

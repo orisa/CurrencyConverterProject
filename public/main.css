@@ -10,6 +10,14 @@ body {
     background-color: #eeeeee;
 }
 
+.networtType {
+    font-size: 14px;
+}
+
+.cacheType {
+    font-size: 14px;
+}
+
 .title {
     font-weight: 500;
     font-size: 20px;

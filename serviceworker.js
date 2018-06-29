@@ -1,9 +1,10 @@
-const staticCacheName = 'cc-static-v2';
+const staticCacheName = 'cc-static-v8';
 const allCaches = [staticCacheName];
 const filesToCache = [
     'public/main.css',
     '/',
-    'public/js/main.js'
+    'public/js/main.js',
+    'node_modules/idb/lib/idb.js'
 ];
 
 self.addEventListener('activate', function (event) {
