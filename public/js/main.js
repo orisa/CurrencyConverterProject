@@ -281,24 +281,20 @@
           return xChangeRateResponse.json().then(xChangeRate => {
               const rate = roundToTwoDecimalPlaces(xChangeRate[query].val)
               updateXchangeRateStore(rate, fromCurrencyId, toCurrencyId);
-              console.log('added fresh data');
+              //console.log('added fresh data');
               networkDataReceived = true;
               return rate;
-              //return cachedRate;
           })
       })
 
       return rate = cachedRatePromise.then(cachedRate => {
-          console.log('returned cached data')
+          //console.log('returned cached data')
           if (!networkDataReceived) {
               return cachedRate;
           }
           return networkRate;
       }).catch(() => {
-          if (networkDataReceived) {
-              return networkRate;
-          }
-          return -1; // rate note available offline
+          return networkRate;
       })
 
   }
@@ -363,9 +359,10 @@
    */
   let updateResult = (newResult) => {
       let resultElem = document.getElementById('result')
+      resultElem.value = "";
       if (newResult < 0) {
           resultElem.classList.add('notAvailable');
-          resultElem.value = "Not Available Offline";
+          resultElem.value = "loading...";
       } else {
           resultElem.value = newResult.toString();
       }
@@ -377,7 +374,7 @@
       let descElem = document.getElementById(descId);
       if (result >= 0) {
           descElem.innerHTML =
-              `${userAmount} from ${fromCurrencyName} to ${toCurrencyName} is ${result}`;
+              `${userAmount} ${fromCurrencyName} is ${result} ${toCurrencyName}`;
       } else {
           descElem.innerHTML = "";
       }
@@ -387,16 +384,16 @@
 
   let convertCurrencies = () => {
       getExchangeRate(convertUrl, fromCurrencyId, toCurrencyId).then(rate => {
-
-          if (rate < 0) {
-              updateResult(rate);
-              updateDescription(rate);
+          //console.log(rate);
+          if (!rate) {
+              updateResult(-1);
+              updateDescription(-1);
               return;
           }
 
           const convertedAmt = convertAmt(rate);
           updateResult(convertedAmt);
-          updateDescription(convertAmt)
+          updateDescription(convertedAmt)
           updateCurrencyNamesStore({
               name: fromCurrencyName,
               id: fromCurrencyId
@@ -536,73 +533,14 @@
 
   }
 
-  //   let setupCurrencyPairDialog = () => {
-  //       // get rate pairs containing fromCurrency name
-
-  //       let dialog = document.getElementById('dialog');
-  //       removeCurrencyNames('dialog', 'div');
-  //       // dialog.innerHTML = "";
-  //       let heading = document.getElementById('heading');
-  //       heading.innerHTML = `Rates Available For ${fromCurrencyName}`;
-
-  //       dbPromise.then((db) => {
-  //           let list = [];
-  //           let tx = db.transaction(rateStoreName, 'readwrite');
-  //           let ratesStore = tx.objectStore(rateStoreName);
-  //           ratesStore.getAll().then(rateList => {
-  //               for (let rateObj of rateList) {
-  //                   if (rateObj.fromCurrencyName == fromCurrencyName) {
-  //                       let divElem = document.createElement('div');
-  //                       divElem.innerHTML = `${rateObj.fromCurrencyName} to ${rateObj.toCurrencyName}`;
-  //                       divElem.addEventListener('click', processCurrencyPair)
-  //                       dialog.appendChild(divElem);
-  //                   }
-  //               }
-  //           })
-  //       })
-
-  //   }
-
-  //   let processCurrencyPair = (event) => {
-  //       if (event) {
-  //           let pairText = event.target.innerHTML;
-  //           let pair = pairText.split('to');
-  //           fromCurrencyName = pair[0].trim();
-  //           toCurrencyName = pair[1].trim();
-  //           fromCurrencyId = getCurrencyId(fromCurrencyName);
-  //           toCurrencyId = getCurrencyId(toCurrencyName);
-  //           document.getElementById(fromElemId).value = fromCurrencyName;
-  //           document.getElementById(toElemId).value = toCurrencyName;
-  //           convertAmount();
-  //           let modal = document.getElementById('myModal');
-  //           modal.style.display = 'none';
-  //       }
-  //   }
-
-  //   let showCurrencyPairDialog = () => {
-  //       // Get the modal
-  //       let modal = document.getElementById('myModal');
-
-  //       // Get the <span> element that closes the modal
-  //       let span = document.getElementsByClassName("close")[0];
-
-  //       modal.style.display = "block";
-
-  //       // When the user clicks on <span> (x), close the modal
-  //       span.onclick = function () {
-  //           modal.style.display = "none";
-  //       }
-
-  //       // When the user clicks anywhere outside of the modal, close it
-  //       window.onclick = function (event) {
-  //           if (event.target == modal) {
-  //               modal.style.display = "none";
-  //           }
-  //       }
-  //   }
 
   let showCachedCurrenciesNames = () => {
 
+      let descElem = document.getElementById(descId);
+      descElem.innerHTML = "Now offline, but your previous conversions are available!!"
+      //   setTimeout(() => {
+      //       descElem.innerHTML = "";
+      //   }, 500);
       toggleBtnState();
 
       getCurrencyNames().then((currencyNames) => {

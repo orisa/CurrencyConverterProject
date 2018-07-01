@@ -1,4 +1,4 @@
-const staticCacheName = 'cc-static-v71';
+const staticCacheName = 'cc-static-v87';
 const allCaches = [staticCacheName];
 const filesToCache = [
     'public/main.css',
@@ -27,7 +27,7 @@ self.addEventListener('install', (event) => {
         caches.open(staticCacheName)
         .then(cache => {
             return cache.addAll(filesToCache).catch(() => {
-                console.log('cant cache items');
+                //console.log('cant cache items');
             });
         })
     );
