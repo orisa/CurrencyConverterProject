@@ -1,4 +1,4 @@
-const staticCacheName = 'cc-static-v8';
+const staticCacheName = 'cc-static-v71';
 const allCaches = [staticCacheName];
 const filesToCache = [
     'public/main.css',
@@ -35,15 +35,16 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        fetch(event.request).catch(() => {
-            console.log(event.request.url)
-            return caches.match(event.request).then((response) => {
+        caches.open(staticCacheName).then(cache => {
+            return cache.match(event.request).then((response) => {
                 if (response) {
                     return response;
-                } else {
-                    console.log('cant fetch from cache');
                 }
+                return fetch(event.request).then(networkResponse => {
+                    return networkResponse;
+                })
             })
         })
+
     )
 })
